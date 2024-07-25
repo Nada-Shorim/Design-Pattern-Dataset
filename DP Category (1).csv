@@ -1,0 +1,431 @@
+﻿Category,Desc
+Creational,"Creational design patterns abstract the instantiation process.They help make a
+system independent of how its objects are created,composed, and represented. A
+class creational pattern uses inheritanceto vary the class that's instantiated,
+whereas an object creationalpattern will delegate instantiation to another object.
+Creational patterns become important as systems evolve to depend moreon object
+composition than class inheritance. As that happens,emphasis shifts away from
+hard-coding a fixed set of behaviors towarddefining a smaller set of fundamental
+behaviors that can be composedinto any number of more complex ones. Thus creating
+objects withparticular behaviors requires more than simply instantiating a class.
+There are two recurring themes in these patterns. First, they allencapsulate
+knowledge about which concrete classes the system uses.Second, they hide how
+instances of these classes are created and puttogether. All the system at large
+knows about the objects is theirinterfaces as defined by abstract classes.
+Consequently, thecreational patterns give you a lot of flexibility in what
+getscreated, who creates it, how it gets created, and when. They let you configure
+a system with ""product"" objects thatvary widely in structure and functionality.
+Configuration can bestatic (that is, specified at compile-time) or dynamic
+(atrun-time).
+Sometimes creational patterns are competitors. For example,there are cases when
+either Prototype (133)or Abstract Factory (99) couldbe used profitably. At other
+times they are complementary: Builder (110) can use one of the otherpatterns to
+implement which components get built. Prototype (133) can use Singleton (144)
+in its implementation. Because the creational patterns are closely related, we'll study allfive of them
+together to highlight their similarities and differences.We'll also use a common
+example—building a maze for a computergame—to illustrate their implementations.
+The maze and the game willvary slightly from pattern to pattern. Sometimes the
+game will besimply to find your way out of a maze; in that case the player
+willprobably only have a local view of the maze. Sometimes mazes containproblems
+to solve and dangers to overcome, and these games may providea map of the part
+of the maze that has been explored.
+We'll ignore many details of what can be in a maze and whether a mazegame has
+a single or multiple players. Instead, we'll just focus onhow mazes get created.
+We define a maze as a set of rooms. A roomknows its neighbors; possible neighbors
+are another room, a wall, or adoor to another room. The classes Room, Door, and Walldefine the components of the maze used in all
+our examples. We defineonly the parts of these classes that are important for
+creating amaze. We'll ignore players, operations for displaying and
+wanderingaround in a maze, and other important functionality that isn'trelevant
+to building the maze.Each room has four sides. We use an enumeration Direction inC++ implementations
+to specify the north, south, east, and west sides ofa room:
+ enum Direction {North, South, East, West};
+The Smalltalk implementations use corresponding symbols to representthese
+directions.
+The class MapSite is the common abstract class for all thecomponents of a maze.
+To simplify the example, MapSite definesonly one operation, Enter. Its meaning
+depends on what you'reentering. If you enter a room, then your location changes.
+If you try toenter a door, then one of two things happen: If the door is open,
+you gointo the next room. If the door is closed, then you hurt your nose.
+class MapSite {
+public:
+virtual void Enter() = 0;
+};
+Enter provides a simple basis for more sophisticated gameoperations. For example,
+if you are in a room and say ""Go East,"" thegame can simply determine which MapSite
+is immediately to theeast and then call Enter on it. The subclass-specificEnter
+operation will figure out whether your location changedor your nose got hurt.
+In a real game, Enter could take theplayer object that's moving about as an argument. Room is the concrete subclass of MapSite thatdefines the key relationships between
+components in the maze. Itmaintains references to other MapSite objects and stores
+aroom number. The number will identify rooms in the maze.We need to know about more than just the parts of a maze. We'll alsodefine a Maze
+class to represent a collection of rooms.Maze can also find a particular room
+given a room numberusing its RoomNo operation. RoomNo could do a look-up using a linear search, a hash table,or even a simple
+array. But we won't worry about such details here.Instead, we'll focus on how
+to specify the components of a maze object.
+Another class we define is MazeGame, which creates the maze.One straightforward
+way to create a maze is with a series of operationsthat add components to a maze
+and then interconnect them. Forexample, the following member function will create
+a maze consistingof two rooms with a door between them: This function is pretty complicated, considering that all it does is createa maze
+with two rooms. There are obvious ways to make it simpler. Forexample, the Room
+constructor could initialize the sideswith walls ahead of time. But that just moves the code somewhere else.The real problem with this member function isn't
+its size but its inflexibility. It hard-codes the maze layout. Changing the
+layoutmeans changing this member function, either by overriding it—whichmeans
+reimplementing the whole thing—or by changing parts ofit—which is error-prone
+and doesn't promote reuse.
+The creational patterns show how to make this design more flexible, not necessarily
+smaller. In particular, they will make iteasy to change the classes that define
+the components of a maze.
+Suppose you wanted to reuse an existing maze layout for a new gamecontaining (of
+all things) enchanted mazes. The enchanted maze game hasnew kinds of components,
+like DoorNeedingSpell, a door thatcan be locked and opened subsequently only with
+a spell; andEnchantedRoom, a room that can have unconventional items init, like
+magic keys or spells. How can you change CreateMazeeasily so that it creates mazes
+with these new classes of objects?
+In this case, the biggest barrier to change lies in hard-coding theclasses that
+get instantiated. The creational patterns providedifferent ways to remove explicit
+references to concrete classesfrom code that needs to instantiate them:
+· If CreateMaze calls virtual functions instead of constructorcalls to create
+the rooms, walls, and doors it requires, then you canchange the classes
+that get instantiated by making a subclass ofMazeGame and redefining those
+virtual functions. This approachis an example of the Factory Method (121)
+pattern.
+· If CreateMaze is passed an object as a parameter to use tocreate rooms,
+walls, and doors, then you can change the classes ofrooms, walls, and doors
+by passing a different parameter. This is anexample of the Abstract Factory
+(99) pattern.
+· If CreateMaze is passed an object that can create a new mazein its entirety
+using operations for adding rooms, doors, and walls tothe maze it builds,
+then you can use inheritance to change parts ofthe maze or the way the maze
+is built. This is an example of the Builder (110) pattern.
+· If CreateMaze is parameterized by various prototypical room,door, and wall
+objects, which it then copies and adds to the maze,then you can change the
+maze's composition by replacing theseprototypical objects with different
+ones. This is an example of the Prototype (133) pattern.
+The remaining creational pattern, Singleton (144), canensure there's only one
+maze per game and that all game objects haveready access to it—without resorting
+to global variables orfunctions. Singleton also makes it easy to extend or replace
+the mazewithout touching existing code. There are two common ways to parameterize a system by the classes ofobjects it
+creates. One way is to subclass the class that creates theobjects; this corresponds
+to using the Factory Method (121) pattern. The main drawback of thisapproach is
+that it can require creating a new subclass just to changethe class of the product.
+Such changes can cascade. For example,when the product creator is itself created
+by a factory method, thenyou have to override its creator as well.
+The other way to parameterize a system relies more on objectcomposition: Define
+an object that's responsible for knowing the classof the product objects, and
+make it a parameter of the system. Thisis a key aspect of the Abstract Factory
+(99),Builder (110), and Prototype (133) patterns. All three involve creating a
+new ""factory object"" whoseresponsibility is to create product objects. Abstract
+Factory has thefactory object producing objects of several classes. Builder has
+thefactory object building a complex product incrementally using acorrespondingly
+complex protocol. Prototype has the factory objectbuilding a product by copying
+a prototype object. In this case, thefactory object and the prototype are the
+same object, because theprototype is responsible for returning the product.
+Consider the drawing editor framework described in the Prototypepattern. There
+are several ways to parameterize a GraphicTool by theclass of product:
+· By applying the Factory Method pattern, a subclass of GraphicTool will
+becreated for each subclass of Graphic in the palette. GraphicTool willhave
+a NewGraphic operation that each GraphicTool subclass willredefine.
+· By applying the Abstract Factory pattern, there will be a class hierarchyof
+GraphicsFactories, one for each Graphic subclass. Each factorycreates just
+one product in this case: CircleFactory will createCircles, LineFactory
+will create Lines, and so on. A GraphicTool willbe parameterized with a
+factory for creating the appropriate kind ofGraphics.
+· By applying the Prototype pattern, each subclass of Graphics willimplement
+the Clone operation, and a GraphicTool will be parameterizedwith a prototype
+of the Graphic it creates.
+Which pattern is best depends on many factors. In our drawing editorframework,
+the Factory Method pattern is easiest to use at first.It's easy to define a new
+subclass of GraphicTool, and the instancesof GraphicTool are created only when
+the palette is defined. The maindisadvantage here is that GraphicTool subclasses
+proliferate, and noneof them does very much.
+Abstract Factory doesn't offer much of an improvement, because itrequires an
+equally large GraphicsFactory class hierarchy. AbstractFactory would be
+preferable to Factory Method only if there werealready a GraphicsFactory class hierarchy—either because thecompiler provides it automatically (as in Smalltalk
+or Objective C) orbecause it's needed in another part of the system.
+Overall, the Prototype pattern is probably the best for the drawingeditor framework,
+because it only requires implementing a Cloneoperation on each Graphics class.
+That reduces the number of classes,and Clone can be used for purposes other than
+pure instantiation (e.g.,a Duplicate menu operation).
+Factory Method makes a design more customizable and only a little morecomplicated.
+Other design patterns require new classes, whereasFactory Method only requires
+a new operation. People often useFactory Method as the standard way to create
+objects, but it isn'tnecessary when the class that's instantiated never changes
+or wheninstantiation takes place in an operation that subclasses can
+easilyoverride, such as an initialization operation.
+Designs that use Abstract Factory, Prototype, or Builder are even moreflexible
+than those that use Factory Method, but they're also morecomplex. Often, designs
+start out using Factory Method and evolvetoward the other creational patterns
+as the designer discovers wheremore flexibility is needed. Knowing many design
+patterns gives youmore choices when trading off one design criterion against
+another. "
+Structural,"Structural patterns are concerned with how classes and objects arecomposed to
+form larger structures.Structural class patterns use inheritance to compose
+interfacesor implementations. As a simple example, consider how
+multipleinheritance mixes two or more classes into one. The result is a classthat
+combines the properties of its parent classes. This pattern isparticularly useful
+for making independently developed class librarieswork together. Another example
+is the class form of the Adapter (157) pattern. In general, an adapter makes
+oneinterface (the adaptee's) conform to another, thereby providing auniform
+abstraction of different interfaces. A class adapteraccomplishes this by
+inheriting privately from an adaptee class. Theadapter then expresses its
+interface in terms of the adaptee's.
+Rather than composing interfaces or implementations, structural object patterns
+describe ways to compose objects to realize newfunctionality. The added
+flexibility of object composition comes fromthe ability to change the composition
+at run-time, which is impossiblewith static class composition.
+Composite (183) is an example of a structural objectpattern. It describes how
+to build a class hierarchy made up ofclasses for two kinds of objects: primitive
+and composite. Thecomposite objects let you compose primitive and other
+compositeobjects into arbitrarily complex structures. In the Proxy (233) pattern,
+a proxy acts as a convenientsurrogate or placeholder for another object. A proxy
+can be used inmany ways. It can act as a local representative for an object in
+aremote address space. It can represent a large object that should beloaded on
+demand. It might protect access to a sensitive object.Proxies provide a level
+of indirection to specific properties ofobjects. Hence they can restrict, enhance,
+or alter these properties.
+The Flyweight (218) pattern defines a structure forsharing objects. Objects are
+shared for at least two reasons:efficiency and consistency. Flyweight focuses
+on sharing for spaceefficiency. Applications that use lots of objects must pay
+carefulattention to the cost of each object. Substantial savings can be hadby
+sharing objects instead of replicating them. But objects can beshared only if
+they don't define context-dependent state. Flyweightobjects have no such state.
+Any additional information they need toperform their task is passed to them when
+needed. With nocontext-dependent state, Flyweight objects may be shared freely.
+Whereas Flyweight shows how to make lots of little objects, Facade (208) shows
+how to make a single object representan entire subsystem. A facade is a
+representative for a set ofobjects. The facade carries out its responsibilities
+by forwardingmessages to the objects it represents. The Bridge (171) pattern separates an object's abstraction from its implementation sothat you can vary
+them independently.
+Decorator (196) describes how to add responsibilitiesto objects dynamically.
+Decorator is a structural pattern thatcomposes objects recursively to allow an
+open-ended number ofadditional responsibilities. For example, a Decorator
+objectcontaining a user interface component can add a decoration like aborder
+or shadow to the component, or it can add functionality likescrolling and zooming.
+We can add two decorations simply by nestingone Decorator object within another,
+and so on for additionaldecorations. To accomplish this, each Decorator object
+must conformto the interface of its component and must forward messages to it.The
+Decorator can do its job (such as drawing a border around thecomponent) either
+before or after forwarding a message.
+Many structural patterns are related to some degree. We'll discussthese
+relationships at the end of the chapter. You may have noticed similarities between the structural patterns,especially in
+their participants and collaborations. This is soprobably because structural
+patterns rely on the same small set oflanguage mechanisms for structuring code
+and objects: single andmultiple inheritance for class-based patterns, and object
+compositionfor object patterns. But the similarities belie the different
+intentsamong these patterns. In this section we compare and contrast groupsof
+structural patterns to give you a feel for their relative merits. The Adapter (157) and Bridge (171) patternshave some common attributes. Both
+promote flexibility by providing alevel of indirection to another object. Both
+involve forwardingrequests to this object from an interface other than its own.
+The key difference between these patterns lies in their intents.Adapter focuses
+on resolving incompatibilities between two existinginterfaces. It doesn't focus
+on how those interfaces are implemented,nor does it consider how they might evolve
+independently. It's a wayof making two independently designed classes work
+together withoutreimplementing one or the other. Bridge, on the other hand, bridges
+anabstraction and its (potentially numerous) implementations. Itprovides a stable
+interface to clients even as it lets you vary theclasses that implement it. It
+also accommodates new implementations asthe system evolves.
+As a result of these differences, Adapter and Bridge are often used atdifferent
+points in the software lifecycle. An adapter often becomesnecessary when you
+discover that two incompatible classesshould work together, generally to avoid
+replicating code. Thecoupling is unforeseen. In contrast, the user of a bridge
+understandsup-front that an abstraction must have several implementations,
+andboth may evolve independently. The Adapter pattern makes things workafter
+they're designed; Bridge makes them work before theyare. That doesn't mean Adapter
+is somehow inferior to Bridge; eachpattern merely addresses a different problem.
+You might think of a facade (see Facade (208)) as anadapter to a set of other
+objects. But that interpretation overlooksthe fact that a facade defines a new
+interface, whereas an adapterreuses an old interface. Remember that an adapter
+makes two existing interfaces work together as opposed to defining an entirelynew
+one. Composite (183) and Decorator (196) have similar structure diagrams, reflecting
+the fact that both rely onrecursive composition to organize an open-ended number
+of objects.This commonality might tempt you to think of a decorator object as
+adegenerate composite, but that misses the point of the Decoratorpattern. The
+similarity ends at recursive composition, again becauseof differing intents.
+Decorator is designed to let you add responsibilities to objectswithout
+subclassing. It avoids the explosion of subclasses that canarise from trying to
+cover every combination of responsibilitiesstatically. Composite has a different
+intent. It focuses onstructuring classes so that many related objects can be
+treateduniformly, and multiple objects can be treated as one. Its focus isnot
+on embellishment but on representation.
+These intents are distinct but complementary. Consequently, theComposite and
+Decorator patterns are often used in concert. Both leadto the kind of design in
+which you can build applications just byplugging objects together without defining
+any new classes. There willbe an abstract class with some subclasses that are
+composites, somethat are decorators, and some that implement the fundamental
+buildingblocks of the system. In this case, both composites and decoratorswill
+have a common interface. From the point of view of the Decoratorpattern, a composite
+is a ConcreteComponent. From the point of view ofthe Composite pattern, a decorator
+is a Leaf. Of course, they don'thave to be used together and, as we have seen,
+their intentsare quite different.
+Another pattern with a structure similar to Decorator's is Proxy (233).Both
+patterns describe how to provide a level of indirection to anobject, and the
+implementations of both the proxy and decoratorobject keep a reference to another
+object to which they forward requests. Once again, however, they are intended
+for different purposes.
+Like Decorator, the Proxy pattern composes an object and provides anidentical
+interface to clients. Unlike Decorator, the Proxy pattern isnot concerned with
+attaching or detaching properties dynamically, andit's not designed for recursive
+composition. Its intent is to providea stand-in for a subject when it's
+inconvenient or undesirable toaccess the subject directly because, for example,
+it lives on a remotemachine, has restricted access, or is persistent.
+In the Proxy pattern, the subject defines the key functionality, andthe proxy
+provides (or refuses) access to it. In Decorator, thecomponent provides only part
+of the functionality, and one or moredecorators furnish the rest. Decorator
+addresses the situation wherean object's total functionality can't be determined
+at compile time,at least not conveniently. That open-endedness makes recursive composition an essential part of Decorator. That isn't the case inProxy, because
+Proxy focuses on one relationship—between the proxyand its subject—and that
+relationship can be expressed statically.
+These differences are significant because they capture solutions tospecific
+recurring problems in object-oriented design. But thatdoesn't mean these patterns
+can't be combined. You might envision aproxy-decorator that adds functionality
+to a proxy, or adecorator-proxy that embellishes a remote object. Although such
+hybridsmight be useful (we don't have real examples handy), they aredivisible
+into patterns that are useful. "
+Behavioral,"Behavioral patterns are concerned with algorithms and theassignment of
+responsibilities between objects. Behavioral patternsdescribe not just patterns
+of objects or classes but also the patternsof communication between them. These
+patterns characterize complexcontrol flow that's difficult to follow at run-time.
+They shift yourfocus away from flow of control to let you concentrate just on
+the wayobjects are interconnected.
+Behavioral class patterns use inheritance to distribute behaviorbetween classes.
+This chapter includes two such patterns. Template Method (360) is the simpler
+and more common ofthe two. A template method is an abstract definition of an
+algorithm.It defines the algorithm step by step. Each step invokes either
+anabstract operation or a primitive operation. A subclass fleshes outthe algorithm
+by defining the abstract operations. The otherbehavioral class pattern is
+Interpreter (274), whichrepresents a grammar as a class hierarchy and implements
+aninterpreter as an operation on instances of these classes.
+Behavioral object patterns use object composition rather thaninheritance. Some
+describe how a group of peer objects cooperate toperform a task that no single
+object can carry out by itself. Animportant issue here is how peer objects know
+about each other. Peerscould maintain explicit references to each other, but that
+wouldincrease their coupling. In the extreme, every object would knowabout every
+other. The Mediator (305) pattern avoidsthis by introducing a mediator object
+between peers. The mediatorprovides the indirection needed for loose coupling.
+Chain of Responsibility (251) provides even loosercoupling. It lets you send
+requests to an object implicitly through achain of candidate objects. Any candidate
+may fulfill the requestdepending on run-time conditions. The number of candidates
+isopen-ended, and you can select which candidates participate in thechain at
+run-time.
+The Observer (326) pattern defines and maintains adependency between objects.
+The classic example of Observer is inSmalltalk Model/View/Controller, where all
+views of the model are notified whenever themodel's state changes.
+Other behavioral object patterns are concerned with encapsulatingbehavior in an
+object and delegating requests to it. The Strategy (349) pattern encapsulates
+an algorithm in anobject. Strategy makes it easy to specify and change the algorithm
+anobject uses. The Command (263) pattern encapsulates arequest in an object so
+that it can be passed as a parameter, storedon a history list, or manipulated
+in other ways. The State (338) pattern encapsulates the states of an objectso
+that the object can change its behavior when its state object changes. Visitor
+(366) encapsulates behavior that wouldotherwise be distributed across classes, and Iterator (289) abstracts the way you access andtraverse objects in an
+aggregate. Encapsulating variation is a theme of many behavioral patterns. Whenan aspect
+of a program changes frequently, these patterns define anobject that encapsulates
+that aspect. Then other parts of the programcan collaborate with the object
+whenever they depend on that aspect.The patterns usually define an abstract class
+that describes theencapsulating object, and the pattern derives its name from
+thatobject.12For example,
+· a Strategy object encapsulates an algorithm (Strategy (349)),
+· a State object encapsulates a state-dependent behavior (State (338)),
+· a Mediator object encapsulates the protocol betweenobjects (Mediator
+(305)), and
+· an Iterator object encapsulates the way you access and traverse
+thecomponents of an aggregate object (Iterator (289)).
+These patterns describe aspects of a program that are likely tochange. Most
+patterns have two kinds of objects: the new object(s)that encapsulate the aspect,
+and the existing object(s) that use thenew ones. Usually the functionality of
+new objects would be anintegral part of the existing objects were it not for the
+pattern. Forexample, code for a Strategy would probably be wired into thestrategy's
+Context, and code for a State would be implemented directlyin the state's Context.
+But not all object behavioral patterns partition functionality likethis. For
+example, Chain of Responsibility (251) dealswith an arbitrary number of objects
+(i.e., a chain), all of which mayalready exist in the system.
+Chain of Responsibility illustrates another difference in behavioralpatterns:
+Not all define static communication relationships betweenclasses. Chain of
+Responsibility prescribes communication between anopen-ended number of objects.
+Other patterns involve objects that arepassed around as arguments. Several patterns introduce an object that's always usedas an argument. One of
+these is Visitor (366). A Visitor object is theargument to a polymorphic Accept
+operation on the objects it visits.The visitor is never considered a part of those
+objects, even thoughthe conventional alternative to the pattern is to distribute
+Visitorcode across the object structure classes.Other patterns define objects that act as magic tokens to be passedaround and
+invoked at a later time. Both Command (263) and Memento (316) fall into this category.
+In Command,the token represents a request; in Memento, it represents the
+internalstate of an object at a particular time.In both cases, the token can have
+a complex internal representation,but the client is never aware of it. But even
+here there aredifferences. Polymorphism is important in the Command
+pattern,because executing the Command object is a polymorphic operation.
+Incontrast, the Memento interface is so narrow that a memento can onlybe passed
+as a value. So it's likely to present no polymorphicoperations at all to its clients. Mediator (305) and Observer (326) arecompeting patterns. The difference between
+them is that Observerdistributes communication by introducing Observer and Subject
+objects,whereas a Mediator object encapsulates the communication between
+otherobjects.
+In the Observer pattern, there is no single object that encapsulates aconstraint.
+Instead, the Observer and the Subject must cooperate tomaintain the constraint.
+Communication patterns are determined by theway observers and subjects are
+interconnected: a single subjectusually has many observers, and sometimes the
+observer of one subjectis a subject of another observer. The Mediator pattern
+centralizesrather than distributes. It places the responsibility for maintaininga
+constraint squarely in the mediator.
+We've found it easier to make reusable Observers and Subjects than tomake reusable
+Mediators. The Observer pattern promotes partitioningand loose coupling between
+Observer and Subject, and that leads tofiner-grained classes that are more apt
+to be reused.
+On the other hand, it's easier to understand the flow of communicationin Mediator
+than in Observer. Observers and subjects are usuallyconnected shortly after
+they're created, and it's hard to see how theyare connected later in the program.
+If you know the Observer pattern,then you understand that the way observers and
+subjects are connectedis important, and you also know what connections to look
+for.However, the indirection that Observer introduces will still make asystem
+harder to understand.
+Observers in Smalltalk can be parameterized with messages to accessthe Subject
+state, and so they are even more reusable than they are inC++. This makes Observer
+more attractive than Mediator in Smalltalk.Thus a Smalltalk programmer will often
+use Observer where a C++programmer would use Mediator. When collaborating objects refer to each other directly, they becomedependent
+on each other, and that can have an adverse impact on thelayering and reusability
+of a system. Command, Observer, Mediator,and Chain of Responsibility address how
+you can decouple senders andreceivers, but with different trade-offs. The Command object provides a simple interface for issuing the request(that is,
+the Execute operation). Defining the sender-receiverconnection in a separate
+object lets the sender work with differentreceivers. It keeps the sender decoupled
+from the receivers, makingsenders easy to reuse. Moreover, you can reuse the
+Command object toparameterize a receiver with different senders. The Command
+patternnominally requires a subclass for each sender-receiver connection,although
+the pattern describes implementation techniques that avoidsubclassing.
+The Observer pattern decouples senders (subjects) from receivers(observers) by
+defining an interface for signaling changes insubjects. Observer defines a looser
+sender-receiver binding thanCommand, since a subject may have multiple observers,
+and their numbercan vary at run-time. The Subject and Observer interfaces in the Observer pattern aredesigned for
+communicating changes. Therefore the Observer pattern isbest for decoupling
+objects when there are data dependencies betweenthem.
+The Mediator pattern decouples objects by having them refer to eachother indirectly
+through a Mediator object. A Mediator object routes requests between Colleague objects andcentralizes their
+communication. Consequently, colleagues can onlytalk to each other through the
+Mediator interface. Because thisinterface is fixed, the Mediator might have to
+implement its owndispatching scheme for added flexibility. Requests can be encoded
+andarguments packed in such a way that colleagues can request anopen-ended set
+of operations. The Mediator pattern can reduce subclassing in a system, because itcentralizes
+communication behavior in one class instead ofdistributing it among subclasses.
+However, ad hoc dispatching schemesoften decrease type safety.
+Finally, the Chain of Responsibility pattern decouples the sender fromthe receiver
+by passing the request along a chain of potentialreceivers: Since the interface between senders and receivers is fixed, Chain ofResponsibility
+may also require a custom dispatching scheme. Hence ithas the same type-safety
+drawbacks as Mediator. Chain ofResponsibility is a good way to decouple the sender
+and the receiverif the chain is already part of the system's structure, and one
+ofseveral objects may be in a position to handle the request. Moreover,the pattern
+offers added flexibility in that the chain can be changed orextended easily.  With few exceptions, behavioral design patterns complement andreinforce each other.
+A class in a chain of responsibility, forexample, will probably include at least
+one application of Template Method (360).The template method can useprimitive
+operations to determine whether the object should handle therequest and to choose
+the object to forward to. The chain can use theCommand pattern to represent requests
+as objects. Interpreter (274) can use the State pattern todefine parsing contexts.
+An iterator can traverse an aggregate, and avisitor can apply an operation to
+each element in the aggregate.
+Behavioral patterns work well with other patterns, too. For example, asystem that
+uses the Composite (183) pattern might usea visitor to perform operations on
+components of thecomposition. It could use Chain of Responsibility to let
+componentsaccess global properties through their parent. It could also use  Decorator (196) to override these properties on partsof the composition. It could
+use the Observer pattern to tie oneobject structure to another and the State pattern
+to let a componentchange its behavior as its state changes. The composition itself
+mightbe created using the approach in Builder (110), and itmight be treated as
+a Prototype (133) by some otherpart of the system.
+Well-designed object-oriented systems are just like this—they havemultiple
+patterns embedded in them—but not because their designersnecessarily thought in
+these terms. Composition at the patternlevel rather than the class or object levels
+lets us achieve the samesynergy with greater ease. "

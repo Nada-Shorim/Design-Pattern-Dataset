@@ -1,0 +1,9 @@
+﻿DP Label,Cat Label,Desc
+20,2,A dynamic menu that adjusts its items based on the role of the user currently logged into the system
+8,1,"A point-of-sale (POS) system that computes the price of items. It begins with the fundamental base price and can incorporate additional factors such as service charges, taxes, VAT, and more"
+12,2,"An HR system where employees can request vacations or permissions, which are then reviewed by their direct manager for approval or rejection. If approved at this level, the request is then forwarded to the department head for further consideration. Finally, if endorsed by the department head, it reaches the general manager for final approval or rejection."
+18,2,"An application allowing students to monitor their attendance records. When approaching the threshold for course withdrawal due to excessive absences, the system automatically sends notifications to the students via mobile app and email. Additionally, notifications are sent to their parents, ensuring all relevant parties are informed of the situation."
+5,1,"An application currently exclusive to Linux platforms, but there's a need for it to be compatible with Windows systems as well."
+17,2,Buiding a system to accommodate various versions while providing the capability to retrieve a specific version.
+16,2,Creating an application with various modules that connect to the central module which handles all communications.
+3,0,"An application that is in demand by multiple clients, built once and copied for reuse across various clients."
